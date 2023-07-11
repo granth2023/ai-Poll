@@ -1,38 +1,12 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User
 
-class Member(AbstractUser):
-    verify_password = models.CharField(max_length=128)
-    wallet_address = models.CharField(max_length=255) 
-
-    # Add a unique related_name for groups field
-    groups = models.ManyToManyField(
-        'auth.Group',
-        related_name='custom_member_set',  # Changed to custom_member_set
-        blank=True,
-    )
-
-    # Add a unique related_name for user_permissions field
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='custom_member_permission_set',  # Changed to custom_member_permission_set
-        blank=True,
-    )
-
-    def clean(self):
-        super().clean()
-        if self.password != self.verify_password:
-            raise ValidationError("Password and Verify Password fields must match.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    metamask_wallet_address = models.CharField(max_length=42)
 
     def __str__(self):
-        return self.username
-    
-    class Meta(AbstractUser.Meta):
-        verbose_name_plural = 'members'
+        return self.user.username
 
 
 class Chatbox(models.Model):
@@ -56,7 +30,7 @@ class Poll(models.Model):
     option_a_votes = models.PositiveIntegerField(default=0)
     option_b_label = models.CharField(max_length=200)
     option_b_votes = models.PositiveIntegerField(default=0)
-    creator = models.ForeignKey(Member, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
     chatbox = models.OneToOneField(Chatbox, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     winner = models.CharField(max_length=1, choices=Option.choices, null=True, blank=True)
@@ -65,10 +39,35 @@ class Poll(models.Model):
     
     def __str__(self):
         return self.title
+    
+    def get_total_votes(self):
+        return self.option_a_votes + self.option_b_votes
+    
+    def get_percentage(self, option):
+        if option == 'a':
+            return round(self.option_a_votes / self.get_total_votes() * 100)
+        elif option == 'b':
+            return round(self.option_b_votes / self.get_total_votes() * 100)
+        else:
+            return 0
+        
+    def get_winner(self):
+        if self.duration_minutes == 0:
+            if self.option_a_votes > self.option_b_votes:
+                self.winner = 'a'
+            elif self.option_b_votes > self.option_a_votes:
+                self.winner = 'b'
+                
+    def get_voting_status(self):
+        if self.duration_minutes > 0:
+            self.voting_status = 'open'
+        else:
+            self.voting_status = 'closed'
+    
         
         
 class Comment(models.Model):
-    creator = models.ForeignKey(Member, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     chatbox = models.ForeignKey(Chatbox, on_delete=models.CASCADE, related_name='comments')
