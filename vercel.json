@@ -1,0 +1,18 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "api",
+        "use": "@vercel/python"
+      }
+    ],
+    "routes": [
+      {
+        "src": "/(.*)",
+        "dest": "aipoll_server/wsgi.py"
+      }
+    ],
+    "env": {
+      "PYTHONUNBUFFERED": "1"
+    }
+  }
