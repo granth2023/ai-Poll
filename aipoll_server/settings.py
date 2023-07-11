@@ -76,30 +76,30 @@ WSGI_APPLICATION = 'aipoll_server.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ai_poll',
-        'USER': 'ai_poll_admin',
-        'PASSWORD': 'password',
-        'HOST': 'localhost'
-    }
-}
-
-# import dj_database_url
-# import django_heroku
-
-# import environ  
-# # Initialise environment variables
-# env = environ.Env()
-# environ.Env.read_env()
- 
-# DATABASE_URL=env('DATABASE_URL')
-
 # DATABASES = {
-#     'default': 
-#         dj_database_url.config(DATABASE_URL)
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'ai_poll',
+#         'USER': 'ai_poll_admin',
+#         'PASSWORD': 'password',
+#         'HOST': 'localhost'
+#     }
 # }
+
+import dj_database_url
+import django_heroku
+
+import environ  
+# Initialise environment variables
+env = environ.Env()
+environ.Env.read_env()
+ 
+DATABASE_URL=env('DATABASE_URL')
+
+DATABASES = {
+    'default': 
+        dj_database_url.config(default=DATABASE_URL)
+}
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
