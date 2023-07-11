@@ -1,5 +1,39 @@
 from django.db import models
-from django.contrib.auth.models import User, AbstractUser
+from django.contrib.auth.models import AbstractUser
+
+class Member(AbstractUser):
+    verify_password = models.CharField(max_length=128)
+    wallet_address = models.CharField(max_length=255) 
+
+    # Add a unique related_name for groups field
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='custom_member_set',  # Changed to custom_member_set
+        blank=True,
+    )
+
+    # Add a unique related_name for user_permissions field
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='custom_member_permission_set',  # Changed to custom_member_permission_set
+        blank=True,
+    )
+
+    def clean(self):
+        super().clean()
+        if self.password != self.verify_password:
+            raise ValidationError("Password and Verify Password fields must match.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.username
+    
+    class Meta(AbstractUser.Meta):
+        verbose_name_plural = 'members'
+
 
 class Chatbox(models.Model):
     chatbox_id = models.CharField(max_length=200)
@@ -22,7 +56,7 @@ class Poll(models.Model):
     option_a_votes = models.PositiveIntegerField(default=0)
     option_b_label = models.CharField(max_length=200)
     option_b_votes = models.PositiveIntegerField(default=0)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(Member, on_delete=models.CASCADE)
     chatbox = models.OneToOneField(Chatbox, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     winner = models.CharField(max_length=1, choices=Option.choices, null=True, blank=True)
@@ -34,7 +68,7 @@ class Poll(models.Model):
         
         
 class Comment(models.Model):
-    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(Member, on_delete=models.CASCADE)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     chatbox = models.ForeignKey(Chatbox, on_delete=models.CASCADE, related_name='comments')
@@ -42,32 +76,3 @@ class Comment(models.Model):
     def __str__(self):
         return f"{self.creator} - {self.text}"
 
-class User(AbstractUser):
-    verify_password = models.CharField(max_length=128)
-    wallet_address = models.CharField(max_length=255) 
-
-    # Add a unique related_name for groups field
-    groups = models.ManyToManyField(
-        'auth.Group',
-        related_name='custom_user_set',
-        blank=True,
-    )
-
-    # Add a unique related_name for user_permissions field
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='custom_user_set',
-        blank=True,
-    )
-
-    def clean(self):
-        super().clean()
-        if self.password != self.verify_password:
-            raise ValidationError("Password and Verify Password fields must match.")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.username
