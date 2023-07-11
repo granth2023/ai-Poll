@@ -4,11 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-asgiref = "==3.7.2"
+asgiref = "*"
 django = "==4.2.3"
 djangorestframework = "==3.14.0"
-pytz = "==2023.3"
-sqlparse = "==0.4.4"
+pytz = "*"
+sqlparse = "*"
 
 [dev-packages]
 
