@@ -87,7 +87,7 @@ WSGI_APPLICATION = 'aipoll_server.wsgi.application'
 # }
 
 import dj_database_url
-import django_heroku
+# import django_heroku
 
 import environ  
 # Initialise environment variables
